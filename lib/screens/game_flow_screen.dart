@@ -667,6 +667,15 @@ class _GamePlayScreenState extends State<_GamePlayScreen> {
                         color: _getDescriptionColor(game.lastOutcome),
                       ),
                     ),
+                    // Roll stats panel
+                    const SizedBox(height: 12),
+                    _RollStatsPanel(
+                      rollCount: state.rollCount,
+                      stockTotal: state.stockTotal,
+                      isLeading:
+                          state.currentRoller != null &&
+                          state.currentRoller!.totalScore >= state.leadingScore,
+                    ),
                   ],
 
                   const SizedBox(height: 16),
@@ -794,6 +803,184 @@ class _StatChip extends StatelessWidget {
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Roll stats panel showing probabilities and recommendations after each roll
+class _RollStatsPanel extends StatelessWidget {
+  final int rollCount;
+  final int stockTotal;
+  final bool isLeading;
+
+  const _RollStatsPanel({
+    required this.rollCount,
+    required this.stockTotal,
+    required this.isLeading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final recommendation = GameLogic.getRecommendation(
+      stockTotal: stockTotal,
+      rollCount: rollCount,
+      pointsDeficit: 0, // Simplified
+      isLeading: isLeading,
+    );
+
+    final survivalPct = GameLogic.getSurvivalText(rollCount + 1);
+    final bustCost = GameLogic.getExpectedBustCost(stockTotal);
+    final inSafeZone = rollCount < 3;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _getRecommendationColor(recommendation.action).withAlpha(77),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Stats row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _StatItem(
+                label: '7 Odds',
+                value: '16.7%',
+                icon: Icons.casino,
+                color: inSafeZone ? AppTheme.successGreen : AppTheme.dangerRed,
+              ),
+              _StatItem(
+                label: 'Survival',
+                value: survivalPct,
+                icon: Icons.favorite,
+                color: _getSurvivalColor(rollCount + 1),
+              ),
+              _StatItem(
+                label: 'Bust Cost',
+                value: '${bustCost.toStringAsFixed(0)}',
+                icon: Icons.warning_amber,
+                color: bustCost > 15 ? AppTheme.dangerRed : AppTheme.accentGold,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Recommendation
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: _getRecommendationColor(
+                recommendation.action,
+              ).withAlpha(26),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _getRecommendationIcon(recommendation.action),
+                  size: 18,
+                  color: _getRecommendationColor(recommendation.action),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${_getRecommendationText(recommendation.action)}: ${recommendation.reason}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _getRecommendationColor(recommendation.action),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getSurvivalColor(int nextRoll) {
+    if (nextRoll <= 3) return AppTheme.successGreen;
+    final survival = GameLogic.getSurvivalProbability(nextRoll);
+    if (survival > 0.6) return AppTheme.successGreen;
+    if (survival > 0.4) return AppTheme.accentGold;
+    return AppTheme.dangerRed;
+  }
+
+  Color _getRecommendationColor(RecommendedAction action) {
+    switch (action) {
+      case RecommendedAction.keepRolling:
+        return AppTheme.successGreen;
+      case RecommendedAction.consider:
+        return AppTheme.accentGold;
+      case RecommendedAction.stock:
+        return AppTheme.dangerRed;
+    }
+  }
+
+  IconData _getRecommendationIcon(RecommendedAction action) {
+    switch (action) {
+      case RecommendedAction.keepRolling:
+        return Icons.play_arrow;
+      case RecommendedAction.consider:
+        return Icons.psychology;
+      case RecommendedAction.stock:
+        return Icons.savings;
+    }
+  }
+
+  String _getRecommendationText(RecommendedAction action) {
+    switch (action) {
+      case RecommendedAction.keepRolling:
+        return 'Keep Rolling';
+      case RecommendedAction.consider:
+        return 'Consider Stocking';
+      case RecommendedAction.stock:
+        return 'Stock Now';
+    }
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
           ),
         ),
       ],

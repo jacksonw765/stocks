@@ -121,4 +121,139 @@ class GameLogic {
         return 'Rolled $sum';
     }
   }
+
+  // ==========================================================================
+  // PROBABILITY HELPERS (Based on Monte Carlo simulation data)
+  // ==========================================================================
+
+  /// Probability of rolling a 7 on any single roll (6/36 = 16.67%)
+  static const double sevenProbability = 0.1667;
+
+  /// Probability of rolling doubles on any single roll (6/36 = 16.67%)
+  static const double doublesProbability = 0.1667;
+
+  /// Survival probability after N rolls (probability of NOT having rolled a 7 yet)
+  /// Based on: (5/6)^(n-3) for rolls after the safe zone
+  static double getSurvivalProbability(int rollCount) {
+    if (rollCount <= 3) return 1.0; // Safe zone, 7 is +70
+    // Probability of surviving each roll after 3 is 5/6
+    int riskyRolls = rollCount - 3;
+    return _pow5_6(riskyRolls);
+  }
+
+  /// Helper: (5/6)^n
+  static double _pow5_6(int n) {
+    double result = 1.0;
+    for (int i = 0; i < n; i++) {
+      result *= (5.0 / 6.0);
+    }
+    return result;
+  }
+
+  /// Survival probability data for common roll counts
+  static const Map<int, double> survivalByRoll = {
+    4: 0.833,
+    5: 0.694,
+    6: 0.579,
+    7: 0.482,
+    8: 0.402,
+    9: 0.335,
+    10: 0.279,
+    11: 0.233,
+    12: 0.194,
+  };
+
+  /// Get a recommendation based on current stock total and roll count
+  static StockRecommendation getRecommendation({
+    required int stockTotal,
+    required int rollCount,
+    required int pointsDeficit,
+    required bool isLeading,
+  }) {
+    // In safe zone (rolls 1-3), always keep rolling unless massive stock
+    if (rollCount <= 3) {
+      return StockRecommendation(
+        action: RecommendedAction.keepRolling,
+        reason: 'Safe zone! 7 gives +70',
+        confidence: Confidence.high,
+      );
+    }
+
+    // Calculate expected bust cost
+    double bustCost = stockTotal * sevenProbability;
+
+    // Thresholds based on Monte Carlo simulation sweet spots
+    if (stockTotal >= 150) {
+      return StockRecommendation(
+        action: isLeading
+            ? RecommendedAction.stock
+            : RecommendedAction.consider,
+        reason:
+            'High value at risk (${bustCost.toStringAsFixed(0)} EV loss if 7)',
+        confidence: Confidence.high,
+      );
+    }
+
+    if (stockTotal >= 100) {
+      if (isLeading) {
+        return StockRecommendation(
+          action: RecommendedAction.consider,
+          reason: 'Good bank. Leading = protect it',
+          confidence: Confidence.medium,
+        );
+      }
+      return StockRecommendation(
+        action: RecommendedAction.keepRolling,
+        reason: 'Solid stock, but not leading',
+        confidence: Confidence.medium,
+      );
+    }
+
+    if (stockTotal >= 60) {
+      return StockRecommendation(
+        action: RecommendedAction.keepRolling,
+        reason: 'Moderate stock, EV positive',
+        confidence: Confidence.medium,
+      );
+    }
+
+    // Low stock - definitely keep rolling
+    return StockRecommendation(
+      action: RecommendedAction.keepRolling,
+      reason: 'Low stock, worth the risk',
+      confidence: Confidence.high,
+    );
+  }
+
+  /// Get formatted survival percentage for display
+  static String getSurvivalText(int rollCount) {
+    if (rollCount <= 3) return '100%'; // Safe zone
+    final survival = getSurvivalProbability(rollCount);
+    return '${(survival * 100).toStringAsFixed(1)}%';
+  }
+
+  /// Get the expected bust cost (what you'd lose on average if you roll again)
+  static double getExpectedBustCost(int stockTotal) {
+    return stockTotal * sevenProbability;
+  }
+
+  /// Get odds text for display
+  static String getSevenOddsText() => '16.7% (1 in 6)';
 }
+
+/// Recommendation data structure
+class StockRecommendation {
+  final RecommendedAction action;
+  final String reason;
+  final Confidence confidence;
+
+  StockRecommendation({
+    required this.action,
+    required this.reason,
+    required this.confidence,
+  });
+}
+
+enum RecommendedAction { keepRolling, consider, stock }
+
+enum Confidence { low, medium, high }
