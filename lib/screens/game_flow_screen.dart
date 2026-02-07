@@ -577,6 +577,190 @@ class _GamePlayScreenState extends State<_GamePlayScreen> {
     }
   }
 
+  void _showStatsModal(
+    BuildContext context,
+    int rollCount,
+    int stockTotal,
+    bool isLeading,
+  ) {
+    final recommendation = GameLogic.getRecommendation(
+      stockTotal: stockTotal,
+      rollCount: rollCount,
+      pointsDeficit: 0,
+      isLeading: isLeading,
+    );
+
+    final survivalPct = GameLogic.getSurvivalText(rollCount + 1);
+    final bustCost = GameLogic.getExpectedBustCost(stockTotal);
+    final inSafeZone = rollCount < 3;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[400],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Title
+            const Text(
+              'Roll Statistics',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            // Stats row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildStatColumn(
+                  Icons.casino,
+                  '7 Odds',
+                  '16.7%',
+                  inSafeZone ? AppTheme.successGreen : AppTheme.dangerRed,
+                ),
+                _buildStatColumn(
+                  Icons.favorite,
+                  'Survival',
+                  survivalPct,
+                  _getSurvivalColor(rollCount + 1),
+                ),
+                _buildStatColumn(
+                  Icons.warning_amber,
+                  'Bust Cost',
+                  bustCost.toStringAsFixed(0),
+                  bustCost > 15 ? AppTheme.dangerRed : AppTheme.accentGold,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Recommendation
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _getRecommendationColor(
+                  recommendation.action,
+                ).withAlpha(26),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _getRecommendationColor(
+                    recommendation.action,
+                  ).withAlpha(77),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    _getRecommendationIcon(recommendation.action),
+                    size: 28,
+                    color: _getRecommendationColor(recommendation.action),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _getRecommendationText(recommendation.action),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: _getRecommendationColor(recommendation.action),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    recommendation.reason,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha(179),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatColumn(
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
+    return Column(
+      children: [
+        Icon(icon, size: 24, color: color),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+      ],
+    );
+  }
+
+  Color _getSurvivalColor(int nextRoll) {
+    if (nextRoll <= 3) return AppTheme.successGreen;
+    final survival = GameLogic.getSurvivalProbability(nextRoll);
+    if (survival > 0.6) return AppTheme.successGreen;
+    if (survival > 0.4) return AppTheme.accentGold;
+    return AppTheme.dangerRed;
+  }
+
+  Color _getRecommendationColor(RecommendedAction action) {
+    switch (action) {
+      case RecommendedAction.keepRolling:
+        return AppTheme.successGreen;
+      case RecommendedAction.consider:
+        return AppTheme.accentGold;
+      case RecommendedAction.stock:
+        return AppTheme.dangerRed;
+    }
+  }
+
+  IconData _getRecommendationIcon(RecommendedAction action) {
+    switch (action) {
+      case RecommendedAction.keepRolling:
+        return Icons.play_arrow;
+      case RecommendedAction.consider:
+        return Icons.psychology;
+      case RecommendedAction.stock:
+        return Icons.savings;
+    }
+  }
+
+  String _getRecommendationText(RecommendedAction action) {
+    switch (action) {
+      case RecommendedAction.keepRolling:
+        return 'Keep Rolling';
+      case RecommendedAction.consider:
+        return 'Consider Stocking';
+      case RecommendedAction.stock:
+        return 'Stock Now';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<GameProvider>(
@@ -605,6 +789,17 @@ class _GamePlayScreenState extends State<_GamePlayScreen> {
                   onPressed: () => _showExitConfirmation(context),
                 ),
                 actions: [
+                  // Stats modal button
+                  IconButton(
+                    icon: const Icon(Icons.analytics_outlined),
+                    onPressed: () => _showStatsModal(
+                      context,
+                      state.rollCount,
+                      state.stockTotal,
+                      state.currentRoller != null &&
+                          state.currentRoller!.totalScore >= state.leadingScore,
+                    ),
+                  ),
                   IconButton(
                     icon: const Icon(Icons.help_outline),
                     onPressed: () => Navigator.pushNamed(context, '/rules'),
@@ -627,16 +822,6 @@ class _GamePlayScreenState extends State<_GamePlayScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ),
-
-                  // Quick stats row before dice are rolled
-                  if (state.die1 == 0 && state.die2 == 0)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: _QuickStatsRow(state: state),
                     ),
 
                   const SizedBox(height: 16),
@@ -666,15 +851,6 @@ class _GamePlayScreenState extends State<_GamePlayScreen> {
                         fontWeight: FontWeight.w600,
                         color: _getDescriptionColor(game.lastOutcome),
                       ),
-                    ),
-                    // Roll stats panel
-                    const SizedBox(height: 12),
-                    _RollStatsPanel(
-                      rollCount: state.rollCount,
-                      stockTotal: state.stockTotal,
-                      isLeading:
-                          state.currentRoller != null &&
-                          state.currentRoller!.totalScore >= state.leadingScore,
                     ),
                   ],
 
@@ -724,266 +900,6 @@ class _GamePlayScreenState extends State<_GamePlayScreen> {
           ],
         );
       },
-    );
-  }
-}
-
-// Quick stats row widget showing game state summary
-class _QuickStatsRow extends StatelessWidget {
-  final GameState state;
-
-  const _QuickStatsRow({required this.state});
-
-  @override
-  Widget build(BuildContext context) {
-    final activePlayers = state.players
-        .where((p) => !p.hasStockedThisRound)
-        .length;
-    final leader = state.playersByScore.isNotEmpty
-        ? state.playersByScore.first
-        : null;
-    final showSevenWarning = state.rollCount > 2;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          // Active players
-          _StatChip(
-            icon: Icons.people,
-            label: '$activePlayers active',
-            color: AppTheme.primaryColor,
-          ),
-          // Leader
-          if (leader != null && leader.totalScore > 0)
-            _StatChip(
-              icon: Icons.emoji_events,
-              label: '${leader.name}: ${leader.totalScore}',
-              color: AppTheme.accentGold,
-            ),
-          // Seven warning after roll 3
-          if (showSevenWarning)
-            _StatChip(
-              icon: Icons.warning_amber_rounded,
-              label: '7 crashes!',
-              color: AppTheme.dangerRed,
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _StatChip({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Roll stats panel showing probabilities and recommendations after each roll
-class _RollStatsPanel extends StatelessWidget {
-  final int rollCount;
-  final int stockTotal;
-  final bool isLeading;
-
-  const _RollStatsPanel({
-    required this.rollCount,
-    required this.stockTotal,
-    required this.isLeading,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final recommendation = GameLogic.getRecommendation(
-      stockTotal: stockTotal,
-      rollCount: rollCount,
-      pointsDeficit: 0, // Simplified
-      isLeading: isLeading,
-    );
-
-    final survivalPct = GameLogic.getSurvivalText(rollCount + 1);
-    final bustCost = GameLogic.getExpectedBustCost(stockTotal);
-    final inSafeZone = rollCount < 3;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _getRecommendationColor(recommendation.action).withAlpha(77),
-        ),
-      ),
-      child: Column(
-        children: [
-          // Stats row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _StatItem(
-                label: '7 Odds',
-                value: '16.7%',
-                icon: Icons.casino,
-                color: inSafeZone ? AppTheme.successGreen : AppTheme.dangerRed,
-              ),
-              _StatItem(
-                label: 'Survival',
-                value: survivalPct,
-                icon: Icons.favorite,
-                color: _getSurvivalColor(rollCount + 1),
-              ),
-              _StatItem(
-                label: 'Bust Cost',
-                value: '${bustCost.toStringAsFixed(0)}',
-                icon: Icons.warning_amber,
-                color: bustCost > 15 ? AppTheme.dangerRed : AppTheme.accentGold,
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          // Recommendation
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: _getRecommendationColor(
-                recommendation.action,
-              ).withAlpha(26),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  _getRecommendationIcon(recommendation.action),
-                  size: 18,
-                  color: _getRecommendationColor(recommendation.action),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${_getRecommendationText(recommendation.action)}: ${recommendation.reason}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: _getRecommendationColor(recommendation.action),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getSurvivalColor(int nextRoll) {
-    if (nextRoll <= 3) return AppTheme.successGreen;
-    final survival = GameLogic.getSurvivalProbability(nextRoll);
-    if (survival > 0.6) return AppTheme.successGreen;
-    if (survival > 0.4) return AppTheme.accentGold;
-    return AppTheme.dangerRed;
-  }
-
-  Color _getRecommendationColor(RecommendedAction action) {
-    switch (action) {
-      case RecommendedAction.keepRolling:
-        return AppTheme.successGreen;
-      case RecommendedAction.consider:
-        return AppTheme.accentGold;
-      case RecommendedAction.stock:
-        return AppTheme.dangerRed;
-    }
-  }
-
-  IconData _getRecommendationIcon(RecommendedAction action) {
-    switch (action) {
-      case RecommendedAction.keepRolling:
-        return Icons.play_arrow;
-      case RecommendedAction.consider:
-        return Icons.psychology;
-      case RecommendedAction.stock:
-        return Icons.savings;
-    }
-  }
-
-  String _getRecommendationText(RecommendedAction action) {
-    switch (action) {
-      case RecommendedAction.keepRolling:
-        return 'Keep Rolling';
-      case RecommendedAction.consider:
-        return 'Consider Stocking';
-      case RecommendedAction.stock:
-        return 'Stock Now';
-    }
-  }
-}
-
-class _StatItem extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _StatItem({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
-          ),
-        ),
-      ],
     );
   }
 }

@@ -69,6 +69,7 @@ class _PlayerScoreCardState extends State<PlayerScoreCard>
     final isLeader =
         widget.player.totalScore == widget.leadScore && widget.leadScore > 0;
     final pointsToLead = widget.leadScore - widget.player.totalScore;
+    final canStock = !hasStocked && widget.stockTotal > 0;
 
     return AnimatedBuilder(
       animation: _glowAnimation,
@@ -100,180 +101,244 @@ class _PlayerScoreCardState extends State<PlayerScoreCard>
           child: child,
         );
       },
-      child: Card(
-        margin: EdgeInsets.zero,
-        color: hasStocked
-            ? AppTheme.successGreen.withOpacity(0.1)
-            : (isLeader ? AppTheme.accentGold.withOpacity(0.1) : null),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
+      child: Dismissible(
+        key: ValueKey('stock_${widget.player.id}'),
+        direction: canStock
+            ? DismissDirection.horizontal
+            : DismissDirection.none,
+        confirmDismiss: (direction) async {
+          if (canStock) {
+            widget.onStock();
+          }
+          return false; // Don't actually dismiss, just trigger stock
+        },
+        background: Container(
+          margin: EdgeInsets.zero,
+          decoration: BoxDecoration(
+            color: AppTheme.successGreen,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.only(left: 24),
+          child: const Row(
             children: [
-              // Player avatar
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: hasStocked
-                        ? [
-                            AppTheme.successGreen,
-                            AppTheme.successGreen.withOpacity(0.7),
-                          ]
-                        : (widget.isCurrentRoller
-                              ? [AppTheme.primaryColor, AppTheme.secondaryColor]
-                              : [
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.primaryContainer,
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.primaryContainer,
-                                ]),
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: hasStocked
-                      ? const Icon(Icons.check, color: Colors.white, size: 24)
-                      : Text(
-                          widget.player.name.substring(0, 1).toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: widget.isCurrentRoller
-                                ? Colors.white
-                                : Theme.of(
-                                    context,
-                                  ).colorScheme.onPrimaryContainer,
-                          ),
-                        ),
+              Icon(Icons.savings, color: Colors.white),
+              SizedBox(width: 8),
+              Text(
+                'STOCK',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: 12),
+            ],
+          ),
+        ),
+        secondaryBackground: Container(
+          margin: EdgeInsets.zero,
+          decoration: BoxDecoration(
+            color: AppTheme.successGreen,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 24),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                'STOCK',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(width: 8),
+              Icon(Icons.savings, color: Colors.white),
+            ],
+          ),
+        ),
+        child: Card(
+          margin: EdgeInsets.zero,
+          color: hasStocked
+              ? AppTheme.successGreen.withOpacity(0.1)
+              : (isLeader ? AppTheme.accentGold.withOpacity(0.1) : null),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                // Player avatar
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: hasStocked
+                          ? [
+                              AppTheme.successGreen,
+                              AppTheme.successGreen.withOpacity(0.7),
+                            ]
+                          : (widget.isCurrentRoller
+                                ? [
+                                    AppTheme.primaryColor,
+                                    AppTheme.secondaryColor,
+                                  ]
+                                : [
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.primaryContainer,
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.primaryContainer,
+                                  ]),
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: hasStocked
+                        ? const Icon(Icons.check, color: Colors.white, size: 24)
+                        : Text(
+                            widget.player.name.substring(0, 1).toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: widget.isCurrentRoller
+                                  ? Colors.white
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 12),
 
-              // Player info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          widget.player.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (isLeader) ...[
-                          const SizedBox(width: 6),
-                          Icon(
-                            Icons.star_rounded,
-                            size: 18,
-                            color: AppTheme.accentGold,
-                          ),
-                        ],
-                        if (widget.isCurrentRoller) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
+                // Player info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            widget.player.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor,
-                              borderRadius: BorderRadius.circular(8),
+                          ),
+                          if (isLeader) ...[
+                            const SizedBox(width: 6),
+                            Icon(
+                              Icons.star_rounded,
+                              size: 18,
+                              color: AppTheme.accentGold,
                             ),
-                            child: const Text(
-                              'ROLLING',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: 0.5,
+                          ],
+                          if (widget.isCurrentRoller) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                'ROLLING',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-                    const SizedBox(height: 2),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        hasStocked
+                            ? 'Stocked ${widget.player.currentRoundStock} pts'
+                            : (pointsToLead > 0
+                                  ? 'Need $pointsToLead to lead'
+                                  : 'Leading'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: hasStocked
+                              ? AppTheme.successGreen
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Score and action
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
                     Text(
-                      hasStocked
-                          ? 'Stocked ${widget.player.currentRoundStock} pts'
-                          : (pointsToLead > 0
-                                ? 'Need $pointsToLead to lead'
-                                : 'Leading'),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: hasStocked
-                            ? AppTheme.successGreen
-                            : Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.6),
+                      '${widget.player.totalScore}',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(width: 12),
 
-              // Score and action
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${widget.player.totalScore}',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 12),
-
-              // Stock button
-              AnimatedOpacity(
-                opacity: hasStocked ? 0.0 : 1.0,
-                duration: const Duration(milliseconds: 200),
-                child: AnimatedScale(
-                  scale: hasStocked ? 0.0 : 1.0,
+                // Stock button
+                AnimatedOpacity(
+                  opacity: hasStocked ? 0.0 : 1.0,
                   duration: const Duration(milliseconds: 200),
-                  child: Material(
-                    color: widget.stockTotal > 0
-                        ? AppTheme.primaryColor
-                        : Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
+                  child: AnimatedScale(
+                    scale: hasStocked ? 0.0 : 1.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Material(
+                      color: widget.stockTotal > 0
+                          ? AppTheme.primaryColor
+                          : Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
-                      onTap: hasStocked || widget.stockTotal == 0
-                          ? null
-                          : widget.onStock,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                        child: Text(
-                          'STOCK',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: widget.stockTotal > 0
-                                ? Colors.white
-                                : Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withOpacity(0.3),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: hasStocked || widget.stockTotal == 0
+                            ? null
+                            : widget.onStock,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          child: Text(
+                            'STOCK',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: widget.stockTotal > 0
+                                  ? Colors.white
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.3),
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

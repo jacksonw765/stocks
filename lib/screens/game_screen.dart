@@ -9,8 +9,15 @@ import '../widgets/dice_display.dart';
 import '../theme/app_theme.dart';
 
 /// Main game screen - where all the action happens
-class GameScreen extends StatelessWidget {
+class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
+
+  @override
+  State<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
+  bool _isKeypadVisible = true;
 
   void _showStockConfirmation(
     BuildContext context,
@@ -171,11 +178,38 @@ class GameScreen extends StatelessWidget {
                 ),
               ),
 
-              // Number pad
-              NumberPad(
-                onRollEntered: (die1, die2) {
-                  game.enterRoll(die1, die2);
-                },
+              // Number pad / Restore button
+              AnimatedSize(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                alignment: Alignment.bottomCenter,
+                child: _isKeypadVisible
+                    ? NumberPad(
+                        onRollEntered: (die1, die2) {
+                          game.enterRoll(die1, die2);
+                        },
+                        onMinimize: () =>
+                            setState(() => _isKeypadVisible = false),
+                      )
+                    : Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        child: SafeArea(
+                          top: false,
+                          child: ElevatedButton.icon(
+                            onPressed: () =>
+                                setState(() => _isKeypadVisible = true),
+                            icon: const Icon(Icons.keyboard_arrow_up),
+                            label: const Text('Show Keypad'),
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 48),
+                            ),
+                          ),
+                        ),
+                      ),
               ),
             ],
           ),

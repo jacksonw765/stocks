@@ -357,87 +357,96 @@ class _MarketCrashOverlayState extends State<MarketCrashOverlay>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Crash icon with glow
-                        Container(
-                          padding: const EdgeInsets.all(28),
-                          decoration: BoxDecoration(
-                            gradient: RadialGradient(
-                              colors: [
-                                AppTheme.dangerRed,
-                                Color.fromRGBO(
-                                  AppTheme.dangerRed.r.toInt(),
-                                  AppTheme.dangerRed.g.toInt(),
-                                  AppTheme.dangerRed.b.toInt(),
-                                  0.8,
+                        // Added children: []
+                        Material(
+                          type: MaterialType.transparency,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Crash icon with glow
+                              Container(
+                                padding: const EdgeInsets.all(28),
+                                decoration: BoxDecoration(
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      AppTheme.dangerRed,
+                                      Color.fromRGBO(
+                                        AppTheme.dangerRed.r.toInt(),
+                                        AppTheme.dangerRed.g.toInt(),
+                                        AppTheme.dangerRed.b.toInt(),
+                                        0.8,
+                                      ),
+                                    ],
+                                  ),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Color.fromRGBO(
+                                        AppTheme.dangerRed.r.toInt(),
+                                        AppTheme.dangerRed.g.toInt(),
+                                        AppTheme.dangerRed.b.toInt(),
+                                        0.6,
+                                      ),
+                                      blurRadius: 40,
+                                      spreadRadius: 15,
+                                    ),
+                                    BoxShadow(
+                                      color: Color.fromRGBO(
+                                        AppTheme.dangerRed.r.toInt(),
+                                        AppTheme.dangerRed.g.toInt(),
+                                        AppTheme.dangerRed.b.toInt(),
+                                        0.3,
+                                      ),
+                                      blurRadius: 80,
+                                      spreadRadius: 30,
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Color.fromRGBO(
-                                  AppTheme.dangerRed.r.toInt(),
-                                  AppTheme.dangerRed.g.toInt(),
-                                  AppTheme.dangerRed.b.toInt(),
-                                  0.6,
+                                child: const Icon(
+                                  Icons.trending_down,
+                                  size: 72,
+                                  color: Colors.white,
                                 ),
-                                blurRadius: 40,
-                                spreadRadius: 15,
                               ),
-                              BoxShadow(
-                                color: Color.fromRGBO(
-                                  AppTheme.dangerRed.r.toInt(),
-                                  AppTheme.dangerRed.g.toInt(),
-                                  AppTheme.dangerRed.b.toInt(),
-                                  0.3,
+                              const SizedBox(height: 28),
+                              // CRASH text with shadow
+                              Text(
+                                'MARKET CRASH!',
+                                style: TextStyle(
+                                  fontSize: 42,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppTheme.dangerRed,
+                                  letterSpacing: 3,
+                                  shadows: [
+                                    Shadow(
+                                      color: Color.fromRGBO(
+                                        AppTheme.dangerRed.r.toInt(),
+                                        AppTheme.dangerRed.g.toInt(),
+                                        AppTheme.dangerRed.b.toInt(),
+                                        0.5,
+                                      ),
+                                      blurRadius: 20,
+                                    ),
+                                    const Shadow(
+                                      color: Colors.black26,
+                                      blurRadius: 10,
+                                      offset: Offset(2, 2),
+                                    ),
+                                  ],
                                 ),
-                                blurRadius: 80,
-                                spreadRadius: 30,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Seven rolled — Round over!',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withAlpha(204),
+                                ),
                               ),
                             ],
-                          ),
-                          child: const Icon(
-                            Icons.trending_down,
-                            size: 72,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-                        // CRASH text with shadow
-                        Text(
-                          'MARKET CRASH!',
-                          style: TextStyle(
-                            fontSize: 42,
-                            fontWeight: FontWeight.w900,
-                            color: AppTheme.dangerRed,
-                            letterSpacing: 3,
-                            shadows: [
-                              Shadow(
-                                color: Color.fromRGBO(
-                                  AppTheme.dangerRed.r.toInt(),
-                                  AppTheme.dangerRed.g.toInt(),
-                                  AppTheme.dangerRed.b.toInt(),
-                                  0.5,
-                                ),
-                                blurRadius: 20,
-                              ),
-                              const Shadow(
-                                color: Colors.black26,
-                                blurRadius: 10,
-                                offset: Offset(2, 2),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Seven rolled — Round over!',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withAlpha(204),
                           ),
                         ),
                       ],

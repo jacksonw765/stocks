@@ -46,6 +46,9 @@ dependencies:
   
   # Winner celebration effects
   confetti: ^0.7.0
+  
+  # Charts for stock ticker display
+  fl_chart: ^0.70.2
 
 dev_dependencies:
   flutter_test:

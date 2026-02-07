@@ -4,8 +4,9 @@ import '../theme/app_theme.dart';
 /// Two-die input number pad for entering dice rolls
 class NumberPad extends StatefulWidget {
   final Function(int die1, int die2) onRollEntered;
+  final VoidCallback? onMinimize;
 
-  const NumberPad({super.key, required this.onRollEntered});
+  const NumberPad({super.key, required this.onRollEntered, this.onMinimize});
 
   @override
   State<NumberPad> createState() => _NumberPadState();
@@ -30,16 +31,39 @@ class _NumberPadState extends State<NumberPad> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SafeArea(
         top: false,
+        bottom: false, // Allow sending down to edge
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Minimize button
+            GestureDetector(
+              onTap: widget.onMinimize,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Center(
+                  child: Container(
+                    width: 32,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
             // Dice preview
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -67,7 +91,7 @@ class _NumberPadState extends State<NumberPad> {
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 6),
             // Number buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -80,14 +104,24 @@ class _NumberPadState extends State<NumberPad> {
                 );
               }),
             ),
-            // Always reserve space for reset button to prevent height changes
-            const SizedBox(height: 12),
+            const SizedBox(height: 6),
+            // Reset button row - compact
             SizedBox(
-              height: 36,
+              height: 28,
               child: _die1 != null
-                  ? TextButton(onPressed: _reset, child: const Text('Reset'))
+                  ? TextButton(
+                      onPressed: _reset,
+                      style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                      child: const Text(
+                        'Reset',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    )
                   : null,
             ),
+            const SizedBox(
+              height: 8,
+            ), // Minimal bottom padding instead of safe area
           ],
         ),
       ),

@@ -18,40 +18,6 @@ class SettingsScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             children: [
               // Game settings section
-              _SectionHeader('Game Settings'),
-              Card(
-                child: Column(
-                  children: [
-                    ListTile(
-                      title: const Text('Default Rounds'),
-                      subtitle: const Text('Number of rounds per game'),
-                      trailing: SegmentedButton<int>(
-                        segments: const [
-                          ButtonSegment(value: 10, label: Text('10')),
-                          ButtonSegment(value: 15, label: Text('15')),
-                          ButtonSegment(value: 20, label: Text('20')),
-                        ],
-                        selected: {settings.totalRounds},
-                        onSelectionChanged: (value) {
-                          settings.setTotalRounds(value.first);
-                        },
-                      ),
-                    ),
-                    const Divider(height: 1),
-                    SwitchListTile(
-                      title: const Text('One Stock Per Roll'),
-                      subtitle: const Text(
-                        'Only one player can stock after each roll',
-                      ),
-                      value: settings.oneStockPerRoll,
-                      onChanged: (value) => settings.setOneStockPerRoll(value),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
               // Appearance section
               _SectionHeader('Appearance'),
               Card(
