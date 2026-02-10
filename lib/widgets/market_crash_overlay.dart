@@ -231,230 +231,231 @@ class _MarketCrashOverlayState extends State<MarketCrashOverlay>
 
         return Transform.translate(
           offset: Offset(shakeX + glitchOffset, shakeY),
-          child: Stack(
-            children: [
-              // Red overlay with pulse
-              Positioned.fill(child: Container(color: _colorAnimation.value)),
-
-              // Flash pulse overlay
-              if (_pulseController.isAnimating)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.white.withAlpha(
-                      (_pulseAnimation.value * 0.3 * 255).toInt(),
-                    ),
-                  ),
-                ),
-
-              // RGB Glitch effect
-              if (_glitchController.isAnimating) ...[
-                Positioned.fill(
-                  child: Transform.translate(
-                    offset: const Offset(-3, 0),
-                    child: Container(color: Colors.red.withAlpha(26)),
-                  ),
-                ),
-                Positioned.fill(
-                  child: Transform.translate(
-                    offset: const Offset(3, 0),
-                    child: Container(color: Colors.cyan.withAlpha(26)),
-                  ),
-                ),
-              ],
-
-              // Crashing chart line
-              Positioned(
-                left: 0,
-                right: 0,
-                top: size.height * 0.15,
-                child: Opacity(
-                  opacity: (1 - _mainController.value).clamp(0.0, 1.0) * 0.6,
-                  child: CustomPaint(
-                    size: Size(size.width, size.height * 0.4),
-                    painter: _CrashingChartPainter(
-                      progress: _chartAnimation.value,
-                      color: AppTheme.dangerRed,
-                    ),
-                  ),
-                ),
+          child: Material(
+            type: MaterialType.transparency,
+            child: DefaultTextStyle(
+              style: const TextStyle(
+                color: Colors.white,
+                decoration: TextDecoration.none,
               ),
+              child: Stack(
+                children: [
+                  // Red overlay with pulse
+                  Positioned.fill(
+                    child: Container(color: _colorAnimation.value),
+                  ),
 
-              // Explosion particles
-              ...(_particles.map((particle) {
-                final progress =
-                    ((_mainController.value - particle.delay) / 0.5).clamp(
-                      0.0,
-                      1.0,
-                    );
-                final distance = particle.speed * progress;
-                final x = size.width / 2 + math.cos(particle.angle) * distance;
-                final y = size.height / 2 + math.sin(particle.angle) * distance;
-
-                return Positioned(
-                  left: x - particle.size / 2,
-                  top: y - particle.size / 2,
-                  child: Opacity(
-                    opacity: (1 - progress).clamp(0.0, 1.0),
-                    child: Container(
-                      width: particle.size,
-                      height: particle.size,
-                      decoration: BoxDecoration(
-                        color: AppTheme.dangerRed,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color.fromRGBO(
-                              AppTheme.dangerRed.r.toInt(),
-                              AppTheme.dangerRed.g.toInt(),
-                              AppTheme.dangerRed.b.toInt(),
-                              0.5,
-                            ),
-                            blurRadius: 4,
-                          ),
-                        ],
+                  // Flash pulse overlay
+                  if (_pulseController.isAnimating)
+                    Positioned.fill(
+                      child: Container(
+                        color: Colors.white.withAlpha(
+                          (_pulseAnimation.value * 0.3 * 255).toInt(),
+                        ),
                       ),
                     ),
-                  ),
-                );
-              })),
 
-              // Falling numbers
-              ..._fallingNumbers.map((num) {
-                final progress =
-                    (_mainController.value - num.delay).clamp(0.0, 1.0) *
-                    num.speed;
-                return Positioned(
-                  left: num.x * size.width,
-                  top: -50 + (progress * (size.height + 100)),
-                  child: Opacity(
-                    opacity: (1 - progress).clamp(0.0, 1.0),
-                    child: Transform.rotate(
-                      angle: progress * 0.5,
-                      child: Text(
-                        '-${num.value}',
-                        style: TextStyle(
-                          fontSize: num.size,
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromRGBO(
-                            AppTheme.dangerRed.r.toInt(),
-                            AppTheme.dangerRed.g.toInt(),
-                            AppTheme.dangerRed.b.toInt(),
-                            0.8,
-                          ),
+                  // RGB Glitch effect
+                  if (_glitchController.isAnimating) ...[
+                    Positioned.fill(
+                      child: Transform.translate(
+                        offset: const Offset(-3, 0),
+                        child: Container(color: Colors.red.withAlpha(26)),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: Transform.translate(
+                        offset: const Offset(3, 0),
+                        child: Container(color: Colors.cyan.withAlpha(26)),
+                      ),
+                    ),
+                  ],
+
+                  // Crashing chart line
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: size.height * 0.15,
+                    child: Opacity(
+                      opacity:
+                          (1 - _mainController.value).clamp(0.0, 1.0) * 0.6,
+                      child: CustomPaint(
+                        size: Size(size.width, size.height * 0.4),
+                        painter: _CrashingChartPainter(
+                          progress: _chartAnimation.value,
+                          color: AppTheme.dangerRed,
                         ),
                       ),
                     ),
                   ),
-                );
-              }),
 
-              // Center crash content
-              Center(
-                child: Opacity(
-                  opacity: _fadeAnimation.value,
-                  child: Transform.scale(
-                    scale: _crashAnimation.value,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Added children: []
-                        Material(
-                          type: MaterialType.transparency,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Crash icon with glow
-                              Container(
-                                padding: const EdgeInsets.all(28),
-                                decoration: BoxDecoration(
-                                  gradient: RadialGradient(
-                                    colors: [
-                                      AppTheme.dangerRed,
-                                      Color.fromRGBO(
-                                        AppTheme.dangerRed.r.toInt(),
-                                        AppTheme.dangerRed.g.toInt(),
-                                        AppTheme.dangerRed.b.toInt(),
-                                        0.8,
-                                      ),
-                                    ],
-                                  ),
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Color.fromRGBO(
-                                        AppTheme.dangerRed.r.toInt(),
-                                        AppTheme.dangerRed.g.toInt(),
-                                        AppTheme.dangerRed.b.toInt(),
-                                        0.6,
-                                      ),
-                                      blurRadius: 40,
-                                      spreadRadius: 15,
-                                    ),
-                                    BoxShadow(
-                                      color: Color.fromRGBO(
-                                        AppTheme.dangerRed.r.toInt(),
-                                        AppTheme.dangerRed.g.toInt(),
-                                        AppTheme.dangerRed.b.toInt(),
-                                        0.3,
-                                      ),
-                                      blurRadius: 80,
-                                      spreadRadius: 30,
-                                    ),
-                                  ],
+                  // Explosion particles
+                  ...(_particles.map((particle) {
+                    final progress =
+                        ((_mainController.value - particle.delay) / 0.5).clamp(
+                          0.0,
+                          1.0,
+                        );
+                    final distance = particle.speed * progress;
+                    final x =
+                        size.width / 2 + math.cos(particle.angle) * distance;
+                    final y =
+                        size.height / 2 + math.sin(particle.angle) * distance;
+
+                    return Positioned(
+                      left: x - particle.size / 2,
+                      top: y - particle.size / 2,
+                      child: Opacity(
+                        opacity: (1 - progress).clamp(0.0, 1.0),
+                        child: Container(
+                          width: particle.size,
+                          height: particle.size,
+                          decoration: BoxDecoration(
+                            color: AppTheme.dangerRed,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color.fromRGBO(
+                                  AppTheme.dangerRed.r.toInt(),
+                                  AppTheme.dangerRed.g.toInt(),
+                                  AppTheme.dangerRed.b.toInt(),
+                                  0.5,
                                 ),
-                                child: const Icon(
-                                  Icons.trending_down,
-                                  size: 72,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 28),
-                              // CRASH text with shadow
-                              Text(
-                                'MARKET CRASH!',
-                                style: TextStyle(
-                                  fontSize: 42,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppTheme.dangerRed,
-                                  letterSpacing: 3,
-                                  shadows: [
-                                    Shadow(
-                                      color: Color.fromRGBO(
-                                        AppTheme.dangerRed.r.toInt(),
-                                        AppTheme.dangerRed.g.toInt(),
-                                        AppTheme.dangerRed.b.toInt(),
-                                        0.5,
-                                      ),
-                                      blurRadius: 20,
-                                    ),
-                                    const Shadow(
-                                      color: Colors.black26,
-                                      blurRadius: 10,
-                                      offset: Offset(2, 2),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Seven rolled — Round over!',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withAlpha(204),
-                                ),
+                                blurRadius: 4,
                               ),
                             ],
                           ),
                         ),
-                      ],
+                      ),
+                    );
+                  })),
+
+                  // Falling numbers
+                  ..._fallingNumbers.map((num) {
+                    final progress =
+                        (_mainController.value - num.delay).clamp(0.0, 1.0) *
+                        num.speed;
+                    return Positioned(
+                      left: num.x * size.width,
+                      top: -50 + (progress * (size.height + 100)),
+                      child: Opacity(
+                        opacity: (1 - progress).clamp(0.0, 1.0),
+                        child: Transform.rotate(
+                          angle: progress * 0.5,
+                          child: Text(
+                            '-${num.value}',
+                            style: TextStyle(
+                              fontSize: num.size,
+                              fontWeight: FontWeight.bold,
+                              color: Color.fromRGBO(
+                                AppTheme.dangerRed.r.toInt(),
+                                AppTheme.dangerRed.g.toInt(),
+                                AppTheme.dangerRed.b.toInt(),
+                                0.8,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+
+                  // Center crash content
+                  Center(
+                    child: Opacity(
+                      opacity: _fadeAnimation.value,
+                      child: Transform.scale(
+                        scale: _crashAnimation.value,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Crash icon with glow
+                            Container(
+                              padding: const EdgeInsets.all(28),
+                              decoration: BoxDecoration(
+                                gradient: RadialGradient(
+                                  colors: [
+                                    AppTheme.dangerRed,
+                                    Color.fromRGBO(
+                                      AppTheme.dangerRed.r.toInt(),
+                                      AppTheme.dangerRed.g.toInt(),
+                                      AppTheme.dangerRed.b.toInt(),
+                                      0.8,
+                                    ),
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Color.fromRGBO(
+                                      AppTheme.dangerRed.r.toInt(),
+                                      AppTheme.dangerRed.g.toInt(),
+                                      AppTheme.dangerRed.b.toInt(),
+                                      0.6,
+                                    ),
+                                    blurRadius: 40,
+                                    spreadRadius: 15,
+                                  ),
+                                  BoxShadow(
+                                    color: Color.fromRGBO(
+                                      AppTheme.dangerRed.r.toInt(),
+                                      AppTheme.dangerRed.g.toInt(),
+                                      AppTheme.dangerRed.b.toInt(),
+                                      0.3,
+                                    ),
+                                    blurRadius: 80,
+                                    spreadRadius: 30,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.trending_down,
+                                size: 72,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+                            // CRASH text with shadow
+                            Text(
+                              'MARKET CRASH!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 42,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.red[300],
+                                letterSpacing: 3,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.red.withAlpha(128),
+                                    blurRadius: 20,
+                                  ),
+                                  const Shadow(
+                                    color: Colors.black26,
+                                    blurRadius: 10,
+                                    offset: Offset(2, 2),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Seven rolled — Round over!',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },

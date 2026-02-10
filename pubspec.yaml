@@ -36,19 +36,22 @@ dependencies:
   cupertino_icons: ^1.0.8
   
   # State management
-  provider: ^6.0.0
+  provider: ^6.1.1
   
   # Persistent storage for saved players and settings
-  shared_preferences: ^2.0.0
+  shared_preferences: ^2.5.4
   
   # Typography
-  google_fonts: ^6.0.0
+  google_fonts: ^8.0.1
   
   # Winner celebration effects
-  confetti: ^0.7.0
+  confetti: ^0.8.0
   
   # Charts for stock ticker display
-  fl_chart: ^0.70.2
+  fl_chart: ^1.1.1
+  
+  # Sliding panel for die input
+  sliding_up_panel: ^2.0.0+1
 
 dev_dependencies:
   flutter_test:

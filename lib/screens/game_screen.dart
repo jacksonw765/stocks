@@ -5,7 +5,7 @@ import '../utils/game_logic.dart';
 import '../widgets/stock_total_display.dart';
 import '../widgets/number_pad.dart';
 import '../widgets/player_score_card.dart';
-import '../widgets/dice_display.dart';
+
 import '../theme/app_theme.dart';
 
 /// Main game screen - where all the action happens
@@ -125,23 +125,17 @@ class _GameScreenState extends State<GameScreen> {
 
               const SizedBox(height: 16),
 
-              // Stock total display
+              // Stock total display with integrated dice
               StockTotalDisplay(
                 total: state.stockTotal,
                 lastOutcome: game.lastOutcome,
                 rollCount: state.rollCount,
+                die1: state.die1 > 0 ? state.die1 : null,
+                die2: state.die2 > 0 ? state.die2 : null,
               ),
 
-              const SizedBox(height: 12),
-
-              // Dice display
+              // Roll description (shown below chart when dice are rolled)
               if (state.die1 > 0 && state.die2 > 0) ...[
-                DiceDisplay(
-                  die1: state.die1,
-                  die2: state.die2,
-                  isDoubles: state.die1 == state.die2,
-                  isSeven: state.die1 + state.die2 == 7,
-                ),
                 const SizedBox(height: 8),
                 Text(
                   game.lastRollDescription,

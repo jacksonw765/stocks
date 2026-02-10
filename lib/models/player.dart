@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// Represents a single player in the game
 class Player {
   final String id;

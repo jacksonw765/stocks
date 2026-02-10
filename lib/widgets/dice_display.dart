@@ -7,6 +7,7 @@ class DiceDisplay extends StatefulWidget {
   final int die2;
   final bool isDoubles;
   final bool isSeven;
+  final bool showPlaceholder;
 
   const DiceDisplay({
     super.key,
@@ -14,6 +15,7 @@ class DiceDisplay extends StatefulWidget {
     required this.die2,
     this.isDoubles = false,
     this.isSeven = false,
+    this.showPlaceholder = false,
   });
 
   @override
@@ -85,12 +87,14 @@ class _DiceDisplayState extends State<DiceDisplay>
             value: widget.die1,
             color: _getDieColor(),
             isSpecial: widget.isDoubles || widget.isSeven,
+            showPlaceholder: widget.showPlaceholder,
           ),
           const SizedBox(width: 16),
           _DieWidget(
             value: widget.die2,
             color: _getDieColor(),
             isSpecial: widget.isDoubles || widget.isSeven,
+            showPlaceholder: widget.showPlaceholder,
           ),
         ],
       ),
@@ -102,15 +106,41 @@ class _DieWidget extends StatelessWidget {
   final int value;
   final Color color;
   final bool isSpecial;
+  final bool showPlaceholder;
 
   const _DieWidget({
     required this.value,
     required this.color,
     required this.isSpecial,
+    this.showPlaceholder = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (showPlaceholder) {
+      return Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          color: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withAlpha(120),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline.withAlpha(50),
+            width: 1.5,
+          ),
+        ),
+        child: Center(
+          child: Icon(
+            Icons.casino_outlined,
+            size: 24,
+            color: Theme.of(context).colorScheme.onSurface.withAlpha(60),
+          ),
+        ),
+      );
+    }
+
     return Container(
       width: 56,
       height: 56,

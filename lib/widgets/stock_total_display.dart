@@ -8,12 +8,16 @@ class StockTotalDisplay extends StatefulWidget {
   final int total;
   final RollOutcome? lastOutcome;
   final int rollCount;
+  final int? die1;
+  final int? die2;
 
   const StockTotalDisplay({
     super.key,
     required this.total,
     this.lastOutcome,
     required this.rollCount,
+    this.die1,
+    this.die2,
   });
 
   @override
@@ -72,7 +76,10 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.total != widget.total) {
       _previousTotal = _displayedTotal;
+
+      // Add a new point with its final value — fl_chart will animate the transition
       _stockHistory.add(widget.total.toDouble());
+
       // Keep max 20 data points for chart
       if (_stockHistory.length > 20) {
         _stockHistory.removeAt(0);
@@ -153,9 +160,7 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1.2,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withAlpha(128),
+                        color: AppTheme.primaryColor,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -223,7 +228,7 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Chart area
           SizedBox(
@@ -233,7 +238,7 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
                 : _buildEmptyChart(context),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           // Bottom row: Roll info
           Container(
@@ -272,10 +277,13 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
   }
 
   Widget _buildChart(Color lineColor) {
-    final spots = _stockHistory.asMap().entries.map((entry) {
-      return FlSpot(entry.key.toDouble(), entry.value);
-    }).toList();
+    // Build spots using final values — fl_chart animates the transition
+    final spots = <FlSpot>[];
+    for (int i = 0; i < _stockHistory.length; i++) {
+      spots.add(FlSpot(i.toDouble(), _stockHistory[i]));
+    }
 
+    // Calculate bounds from actual history values
     final maxY = _stockHistory.reduce((a, b) => a > b ? a : b) * 1.1;
     final minY = _stockHistory.reduce((a, b) => a < b ? a : b) * 0.9;
 
@@ -293,9 +301,9 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            curveSmoothness: 0.35,
+            curveSmoothness: 0.45,
             color: lineColor,
-            barWidth: 3,
+            barWidth: 2.5,
             isStrokeCapRound: true,
             dotData: FlDotData(
               show: true,
@@ -328,7 +336,8 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
           ),
         ],
       ),
-      duration: const Duration(milliseconds: 300),
+      // Let fl_chart smoothly interpolate the entire chart (axis rescaling + line movement)
+      duration: const Duration(milliseconds: 600),
       curve: Curves.easeOutCubic,
     );
   }

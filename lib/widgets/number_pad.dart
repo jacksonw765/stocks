@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 
 /// Two-die input number pad for entering dice rolls
 class NumberPad extends StatefulWidget {
   final Function(int die1, int die2) onRollEntered;
+  final Function(int? pendingDie)? onPendingDieChanged;
   final VoidCallback? onMinimize;
 
-  const NumberPad({super.key, required this.onRollEntered, this.onMinimize});
+  const NumberPad({
+    super.key,
+    required this.onRollEntered,
+    this.onPendingDieChanged,
+    this.onMinimize,
+  });
 
   @override
   State<NumberPad> createState() => _NumberPadState();
@@ -18,199 +23,195 @@ class _NumberPadState extends State<NumberPad> {
   void _onDieTap(int value) {
     if (_die1 == null) {
       setState(() => _die1 = value);
+      widget.onPendingDieChanged?.call(value);
     } else {
       widget.onRollEntered(_die1!, value);
       setState(() => _die1 = null);
+      widget.onPendingDieChanged?.call(null);
     }
   }
 
   void _reset() {
     setState(() => _die1 = null);
+    widget.onPendingDieChanged?.call(null);
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 2),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: SafeArea(
-        top: false,
-        bottom: false, // Allow sending down to edge
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Minimize button
-            GestureDetector(
-              onTap: widget.onMinimize,
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Center(
-                  child: Container(
-                    width: 32,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurfaceVariant.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Minimize handle
+          GestureDetector(
+            onTap: widget.onMinimize,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Center(
+                child: Container(
+                  width: 32,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 4),
-            // Dice preview
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _DicePreview(
-                  value: _die1,
-                  label: 'Die 1',
-                  isActive: _die1 == null,
-                ),
-                const SizedBox(width: 16),
-                const Icon(Icons.add, size: 24),
-                const SizedBox(width: 16),
-                _DicePreview(
-                  value: _die1 != null ? null : null,
-                  label: 'Die 2',
-                  isActive: _die1 != null,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _die1 == null ? 'Tap first die value' : 'Tap second die value',
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-              ),
-            ),
-            const SizedBox(height: 6),
-            // Number buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(6, (index) {
-                final value = index + 1;
-                return _DieButton(
+          ),
+          const SizedBox(height: 8),
+          // Number buttons - two rows
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(3, (index) {
+              final value = index + 1;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: _DieButton(
                   value: value,
                   onTap: () => _onDieTap(value),
-                  isFirstDie: _die1 == null,
-                );
-              }),
-            ),
-            const SizedBox(height: 6),
-            // Reset button row - compact
-            SizedBox(
-              height: 28,
-              child: _die1 != null
-                  ? TextButton(
-                      onPressed: _reset,
-                      style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                      child: const Text(
-                        'Reset',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    )
-                  : null,
-            ),
-            const SizedBox(
-              height: 8,
-            ), // Minimal bottom padding instead of safe area
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DicePreview extends StatelessWidget {
-  final int? value;
-  final String label;
-  final bool isActive;
-
-  const _DicePreview({
-    required this.value,
-    required this.label,
-    required this.isActive,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: 64,
-      height: 64,
-      decoration: BoxDecoration(
-        color: value != null
-            ? AppTheme.primaryColor
-            : (isActive
-                  ? Theme.of(context).colorScheme.primaryContainer
-                  : Theme.of(context).colorScheme.surface),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isActive ? AppTheme.primaryColor : Colors.grey.shade300,
-          width: isActive ? 2 : 1,
-        ),
-      ),
-      child: Center(
-        child: value != null
-            ? Text(
-                '$value',
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  isSelected: _die1 == value,
                 ),
-              )
-            : Text(
-                '?',
-                style: TextStyle(
-                  fontSize: 24,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.3),
+              );
+            }),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(3, (index) {
+              final value = index + 4;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: _DieButton(
+                  value: value,
+                  onTap: () => _onDieTap(value),
+                  isSelected: _die1 == value,
                 ),
+              );
+            }),
+          ),
+          // Compact reset button (only shows when die1 is selected)
+          if (_die1 != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: TextButton(
+                onPressed: _reset,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('Reset', style: TextStyle(fontSize: 12)),
               ),
+            ),
+          const SizedBox(height: 2),
+        ],
       ),
     );
   }
 }
 
-class _DieButton extends StatelessWidget {
+class _DieButton extends StatefulWidget {
   final int value;
   final VoidCallback onTap;
-  final bool isFirstDie;
+  final bool isSelected;
 
   const _DieButton({
     required this.value,
     required this.onTap,
-    required this.isFirstDie,
+    required this.isSelected,
   });
 
   @override
+  State<_DieButton> createState() => _DieButtonState();
+}
+
+class _DieButtonState extends State<_DieButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.92,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    _controller.forward().then((_) {
+      _controller.reverse();
+    });
+    widget.onTap();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Theme.of(context).colorScheme.primaryContainer,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 52,
-          height: 52,
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) => _controller.reverse(),
+      onTapCancel: () => _controller.reverse(),
+      onTap: _handleTap,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            color: widget.isSelected
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: widget.isSelected
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.outline.withAlpha(40),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: widget.isSelected
+                    ? Theme.of(context).colorScheme.primary.withAlpha(60)
+                    : Colors.black.withAlpha(15),
+                blurRadius: widget.isSelected ? 8 : 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
           alignment: Alignment.center,
           child: Text(
-            '$value',
+            '${widget.value}',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onPrimaryContainer,
+              color: widget.isSelected
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : Theme.of(context).colorScheme.onPrimaryContainer,
             ),
           ),
         ),

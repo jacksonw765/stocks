@@ -3,9 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 /// App theme configuration
 class AppTheme {
-  // Primary colors - using a rich stock market green/blue palette
+  // Primary colors - using a rich stock market green/red palette
   static const Color primaryColor = Color(0xFF00C853); // Vibrant green
-  static const Color secondaryColor = Color(0xFF1E88E5); // Blue
+  static const Color secondaryColor = Color(0xFFC62828); // Deep red
   static const Color accentGold = Color(0xFFFFD700); // Gold for highlights
   static const Color dangerRed = Color(0xFFE53935); // Red for sevens
   static const Color successGreen = Color(0xFF4CAF50); // Success green

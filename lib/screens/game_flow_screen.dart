@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:confetti/confetti.dart';
+import 'package:sliding_up_panel/sliding_up_panel.dart';
 import '../models/game_state.dart';
 import '../models/player.dart';
 import '../providers/game_provider.dart';
@@ -452,6 +453,7 @@ class _GamePlayScreen extends StatefulWidget {
 class _GamePlayScreenState extends State<_GamePlayScreen> {
   bool _showingCrash = false;
   bool _roundEndHandled = false;
+  final PanelController _panelController = PanelController();
 
   void _showStockConfirmation(
     BuildContext context,
@@ -494,7 +496,10 @@ class _GamePlayScreenState extends State<_GamePlayScreen> {
                       height: 50,
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Cancel'),
+                        child: const Text(
+                          'Cancel',
+                          selectionColor: AppTheme.secondaryColor,
+                        ),
                       ),
                     ),
                   ),
@@ -539,7 +544,10 @@ class _GamePlayScreenState extends State<_GamePlayScreen> {
               Navigator.pop(ctx);
               widget.onExit();
             },
-            child: const Text('Exit'),
+            child: const Text(
+              'Exit',
+              style: TextStyle(color: AppTheme.secondaryColor),
+            ),
           ),
         ],
       ),
@@ -806,86 +814,154 @@ class _GamePlayScreenState extends State<_GamePlayScreen> {
                   ),
                 ],
               ),
-              body: Column(
-                children: [
-                  // Current roller banner
-                  if (state.currentRoller != null)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      color: AppTheme.primaryColor.withAlpha(26),
-                      child: Text(
-                        '${state.currentRoller!.name}\'s turn to roll',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
+              body: SlidingUpPanel(
+                controller: _panelController,
+                minHeight: 50,
+                maxHeight: 200,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                defaultPanelState: PanelState.OPEN,
+                panel: NumberPad(
+                  onRollEntered: (die1, die2) {
+                    game.enterRoll(die1, die2);
+                  },
+                  onMinimize: () => _panelController.close(),
+                ),
+                collapsed: GestureDetector(
+                  onTap: () => _panelController.open(),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(20),
                       ),
                     ),
-
-                  const SizedBox(height: 16),
-
-                  // Stock total display
-                  StockTotalDisplay(
-                    total: state.stockTotal,
-                    lastOutcome: game.lastOutcome,
-                    rollCount: state.rollCount,
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Dice display
-                  if (state.die1 > 0 && state.die2 > 0) ...[
-                    DiceDisplay(
-                      die1: state.die1,
-                      die2: state.die2,
-                      isDoubles: state.die1 == state.die2,
-                      isSeven: state.die1 + state.die2 == 7,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant.withOpacity(0.4),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.keyboard_arrow_up,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Drag up to enter roll',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.keyboard_arrow_up,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      game.lastRollDescription,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: _getDescriptionColor(game.lastOutcome),
+                  ),
+                ),
+                body: Column(
+                  children: [
+                    // Current roller banner
+                    if (state.currentRoller != null)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        color: AppTheme.primaryColor.withAlpha(26),
+                        child: Text(
+                          '${state.currentRoller!.name}\'s turn to roll',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+
+                    const SizedBox(height: 16),
+
+                    // Stock total display
+                    StockTotalDisplay(
+                      total: state.stockTotal,
+                      lastOutcome: game.lastOutcome,
+                      rollCount: state.rollCount,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Dice display - always visible
+                    DiceDisplay(
+                      die1: state.die1 > 0 ? state.die1 : 0,
+                      die2: state.die2 > 0 ? state.die2 : 0,
+                      isDoubles: state.die1 > 0 && state.die1 == state.die2,
+                      isSeven: state.die1 > 0 && state.die1 + state.die2 == 7,
+                      showPlaceholder: state.die1 == 0,
+                    ),
+                    if (state.die1 > 0 && state.die2 > 0) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        game.lastRollDescription,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: _getDescriptionColor(game.lastOutcome),
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
+
+                    // Player list
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: state.players.length,
+                        padding: const EdgeInsets.only(bottom: 60),
+                        itemBuilder: (context, index) {
+                          final player = state.players[index];
+                          return PlayerScoreCard(
+                            player: player,
+                            stockTotal: state.stockTotal,
+                            leadScore: state.leadingScore,
+                            isCurrentRoller: index == state.currentRollerIndex,
+                            onStock: () => _showStockConfirmation(
+                              context,
+                              player.id,
+                              player.name,
+                              state.stockTotal,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
-
-                  const SizedBox(height: 16),
-
-                  // Player list
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: state.players.length,
-                      padding: const EdgeInsets.only(bottom: 8),
-                      itemBuilder: (context, index) {
-                        final player = state.players[index];
-                        return PlayerScoreCard(
-                          player: player,
-                          stockTotal: state.stockTotal,
-                          leadScore: state.leadingScore,
-                          isCurrentRoller: index == state.currentRollerIndex,
-                          onStock: () => _showStockConfirmation(
-                            context,
-                            player.id,
-                            player.name,
-                            state.stockTotal,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-
-                  // Number pad
-                  NumberPad(
-                    onRollEntered: (die1, die2) {
-                      game.enterRoll(die1, die2);
-                    },
-                  ),
-                ],
+                ),
               ),
             ),
 
