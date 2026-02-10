@@ -47,7 +47,6 @@ class _GameOverScreenState extends State<GameOverScreen> {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    const Spacer(),
                     // Winner announcement
                     Container(
                       padding: const EdgeInsets.all(24),

@@ -125,16 +125,19 @@ class _GameScreenState extends State<GameScreen> {
 
               const SizedBox(height: 16),
 
-              // Stock total display with integrated dice
+              // Stock dashboard with integrated dice & roll history
               StockTotalDisplay(
                 total: state.stockTotal,
                 lastOutcome: game.lastOutcome,
                 rollCount: state.rollCount,
                 die1: state.die1 > 0 ? state.die1 : null,
                 die2: state.die2 > 0 ? state.die2 : null,
+                rollHistory: state.rollHistory,
+                currentRollerId: state.currentRoller?.id,
+                currentRollerName: state.currentRoller?.name,
               ),
 
-              // Roll description (shown below chart when dice are rolled)
+              // Roll description
               if (state.die1 > 0 && state.die2 > 0) ...[
                 const SizedBox(height: 8),
                 Text(

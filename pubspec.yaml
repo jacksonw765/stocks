@@ -47,8 +47,7 @@ dependencies:
   # Winner celebration effects
   confetti: ^0.8.0
   
-  # Charts for stock ticker display
-  fl_chart: ^1.1.1
+
   
   # Sliding panel for die input
   sliding_up_panel: ^2.0.0+1

@@ -1,4 +1,26 @@
 import 'player.dart';
+import '../utils/game_logic.dart';
+
+/// A single roll entry in the game's history
+class RollHistoryEntry {
+  final int die1;
+  final int die2;
+  final RollOutcome outcome;
+  final int stockTotal;
+  final int round;
+  final String rollerId;
+  final String rollerName;
+
+  const RollHistoryEntry({
+    required this.die1,
+    required this.die2,
+    required this.outcome,
+    required this.stockTotal,
+    required this.round,
+    required this.rollerId,
+    required this.rollerName,
+  });
+}
 
 /// Encapsulates the entire state of an active game session
 class GameState {
@@ -15,6 +37,9 @@ class GameState {
   bool oneStockPerRoll; // Variant rule
   bool someoneStockedThisRoll; // For variant rule
 
+  /// Full roll history across all rounds in this game session
+  List<RollHistoryEntry> rollHistory;
+
   GameState({
     required this.players,
     this.totalRounds = 20,
@@ -28,7 +53,8 @@ class GameState {
     this.gameOver = false,
     this.oneStockPerRoll = false,
     this.someoneStockedThisRoll = false,
-  });
+    List<RollHistoryEntry>? rollHistory,
+  }) : rollHistory = rollHistory ?? [];
 
   /// Get the current roller
   Player? get currentRoller =>
@@ -64,6 +90,11 @@ class GameState {
     }
   }
 
+  /// Get rolls for a specific player
+  List<RollHistoryEntry> rollsForPlayer(String playerId) {
+    return rollHistory.where((e) => e.rollerId == playerId).toList();
+  }
+
   /// Create a copy of this game state
   GameState copyWith({
     List<Player>? players,
@@ -78,6 +109,7 @@ class GameState {
     bool? gameOver,
     bool? oneStockPerRoll,
     bool? someoneStockedThisRoll,
+    List<RollHistoryEntry>? rollHistory,
   }) {
     return GameState(
       players: players ?? this.players,
@@ -93,6 +125,7 @@ class GameState {
       oneStockPerRoll: oneStockPerRoll ?? this.oneStockPerRoll,
       someoneStockedThisRoll:
           someoneStockedThisRoll ?? this.someoneStockedThisRoll,
+      rollHistory: rollHistory ?? List.from(this.rollHistory),
     );
   }
 }

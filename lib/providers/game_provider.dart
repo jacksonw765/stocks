@@ -44,6 +44,20 @@ class GameProvider extends ChangeNotifier {
       rollCount: _state.rollCount,
     );
 
+    // Record in persistent roll history
+    final roller = _state.players[_state.currentRollerIndex];
+    _state.rollHistory.add(
+      RollHistoryEntry(
+        die1: die1,
+        die2: die2,
+        outcome: outcome,
+        stockTotal: _state.stockTotal,
+        round: _state.currentRound,
+        rollerId: roller.id,
+        rollerName: roller.name,
+      ),
+    );
+
     if (outcome == RollOutcome.seven) {
       endRound();
       return;
@@ -117,6 +131,7 @@ class GameProvider extends ChangeNotifier {
       players: _state.players,
       totalRounds: _state.totalRounds,
       oneStockPerRoll: _state.oneStockPerRoll,
+      // rollHistory starts fresh for a new game
     );
     _lastOutcome = null;
     _lastRollDescription = '';

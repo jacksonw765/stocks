@@ -912,6 +912,9 @@ class _GamePlayScreenState extends State<_GamePlayScreen> {
                       total: state.stockTotal,
                       lastOutcome: game.lastOutcome,
                       rollCount: state.rollCount,
+                      rollHistory: state.rollHistory,
+                      currentRollerId: state.currentRoller?.id,
+                      currentRollerName: state.currentRoller?.name,
                     ),
 
                     const SizedBox(height: 12),
