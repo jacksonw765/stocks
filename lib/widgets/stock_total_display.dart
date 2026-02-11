@@ -258,7 +258,7 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
 
           // ── Per-Player Roll Log (fixed height to prevent layout jumps) ──
           SizedBox(
-            height: 52,
+            height: 56,
             child: widget.currentRollerId != null
                 ? _buildPlayerRollLog(context, history)
                 : const SizedBox.shrink(),
@@ -434,10 +434,56 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
         ? allPlayerRolls.sublist(allPlayerRolls.length - 5)
         : allPlayerRolls;
 
-    if (recentRolls.isEmpty) return const SizedBox.shrink();
-
     final rollerName = widget.currentRollerName ?? 'Player';
     final textColor = Theme.of(context).colorScheme.onSurface;
+
+    if (recentRolls.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.history_rounded,
+                  size: 13,
+                  color: textColor.withAlpha(100),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  '$rollerName\'s Rolls',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                    color: textColor.withAlpha(120),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '0 total',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: textColor.withAlpha(80),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'No rolls yet',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: textColor.withAlpha(60),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
