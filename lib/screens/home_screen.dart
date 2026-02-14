@@ -325,9 +325,8 @@ class _AnimatedRoundSelectorState extends State<_AnimatedRoundSelector>
   late Animation<double> _glowAnimation;
   int? _bouncingIndex;
 
-  static const double _itemWidth = 52.0;
-  static const double _itemHeight = 44.0;
-  static const double _padding = 4.0;
+  static const double _itemHeight = 52.0;
+  static const double _padding = 6.0;
 
   @override
   void initState() {
@@ -389,96 +388,114 @@ class _AnimatedRoundSelectorState extends State<_AnimatedRoundSelector>
         Text(
           'NUMBER OF ROUNDS',
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: FontWeight.w700,
             letterSpacing: 2,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
           ),
         ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(_padding),
-          decoration: BoxDecoration(
-            color: Theme.of(
-              context,
-            ).colorScheme.surfaceContainerHighest.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Stack(
-            children: [
-              // Sliding indicator background
-              AnimatedBuilder(
-                animation: _glowController,
-                builder: (context, child) {
-                  return AnimatedPositioned(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOutCubic,
-                    left: _selectedIndex * _itemWidth,
-                    top: 0,
-                    child: Container(
-                      width: _itemWidth,
-                      height: _itemHeight,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppTheme.primaryColor,
-                            AppTheme.secondaryColor,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.primaryColor.withOpacity(
-                              _glowAnimation.value,
-                            ),
-                            blurRadius: 12,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-              // Round buttons
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(widget.rounds.length, (index) {
-                  final rounds = widget.rounds[index];
-                  final isSelected = rounds == widget.selectedRounds;
-                  final isBouncing = index == _bouncingIndex;
+        const SizedBox(height: 14),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth =
+                  (constraints.maxWidth - _padding * 2) / widget.rounds.length;
 
-                  return GestureDetector(
-                    onTap: () => _onTap(index),
-                    child: AnimatedBuilder(
-                      animation: _bounceAnimation,
+              return Container(
+                padding: const EdgeInsets.all(_padding),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Stack(
+                  children: [
+                    // Sliding indicator background
+                    AnimatedBuilder(
+                      animation: _glowController,
                       builder: (context, child) {
-                        final scale = isBouncing ? _bounceAnimation.value : 1.0;
-                        return Transform.scale(scale: scale, child: child);
-                      },
-                      child: Container(
-                        width: _itemWidth,
-                        height: _itemHeight,
-                        alignment: Alignment.center,
-                        child: AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 200),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected
-                                ? Colors.white
-                                : Theme.of(context).colorScheme.onSurface,
+                        return AnimatedPositioned(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutCubic,
+                          left: _selectedIndex * itemWidth,
+                          top: 0,
+                          child: Container(
+                            width: itemWidth,
+                            height: _itemHeight,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.primaryColor,
+                                  AppTheme.secondaryColor,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primaryColor.withOpacity(
+                                    _glowAnimation.value,
+                                  ),
+                                  blurRadius: 12,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
                           ),
-                          child: Text('$rounds'),
-                        ),
-                      ),
+                        );
+                      },
                     ),
-                  );
-                }),
-              ),
-            ],
+                    // Round buttons
+                    Row(
+                      children: List.generate(widget.rounds.length, (index) {
+                        final rounds = widget.rounds[index];
+                        final isSelected = rounds == widget.selectedRounds;
+                        final isBouncing = index == _bouncingIndex;
+
+                        return Expanded(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _onTap(index),
+                            child: AnimatedBuilder(
+                              animation: _bounceAnimation,
+                              builder: (context, child) {
+                                final scale =
+                                    isBouncing ? _bounceAnimation.value : 1.0;
+                                return Transform.scale(
+                                  scale: scale,
+                                  child: child,
+                                );
+                              },
+                              child: SizedBox(
+                                height: _itemHeight,
+                                child: Center(
+                                  child: AnimatedDefaultTextStyle(
+                                    duration: const Duration(milliseconds: 200),
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
+                                    ),
+                                    child: Text('$rounds'),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ],

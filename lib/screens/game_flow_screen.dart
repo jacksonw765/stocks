@@ -789,6 +789,7 @@ class _GamePlayScreenState extends State<_GamePlayScreen> {
             // Main game UI
             Scaffold(
               appBar: AppBar(
+                toolbarHeight: 40,
                 title: Text(
                   'Round ${state.currentRound} of ${state.totalRounds}',
                 ),
@@ -924,7 +925,8 @@ class _GamePlayScreenState extends State<_GamePlayScreen> {
                       die1: state.die1 > 0 ? state.die1 : 0,
                       die2: state.die2 > 0 ? state.die2 : 0,
                       isDoubles: state.die1 > 0 && state.die1 == state.die2,
-                      isSeven: state.die1 > 0 && state.die1 + state.die2 == 7,
+                      isSeven: state.die1 > 0 && state.die1 + state.die2 == 7 && state.rollCount > 3,
+                      isSafeSeven: state.die1 > 0 && state.die1 + state.die2 == 7 && state.rollCount <= 3,
                       showPlaceholder: state.die1 == 0,
                     ),
                     if (state.die1 > 0 && state.die2 > 0) ...[
@@ -945,7 +947,7 @@ class _GamePlayScreenState extends State<_GamePlayScreen> {
                     Expanded(
                       child: ListView.builder(
                         itemCount: state.players.length,
-                        padding: const EdgeInsets.only(bottom: 60),
+                        padding: const EdgeInsets.only(bottom: 160),
                         itemBuilder: (context, index) {
                           final player = state.players[index];
                           return PlayerScoreCard(
@@ -1138,17 +1140,120 @@ class _RoundSummaryViewState extends State<_RoundSummaryView>
                 ),
                 const SizedBox(height: 24),
 
-                // Animated Standings
+                // Leading Scorer
+                if (sortedPlayers.isNotEmpty)
+                  AnimatedBuilder(
+                    animation: _cardsController,
+                    builder: (context, child) {
+                      final anim = _getCardAnimation(0, sortedPlayers.length);
+                      return Transform.translate(
+                        offset: Offset(
+                          (1 - anim.value.clamp(0.0, 1.0)) * 100,
+                          0,
+                        ),
+                        child: Opacity(
+                          opacity: anim.value.clamp(0.0, 1.0),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Card(
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(
+                          color: AppTheme.accentGold.withOpacity(0.6),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: ListTile(
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color(0xFFFFD700),
+                                Color(0xFFFFA000),
+                              ],
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.emoji_events_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                        title: Row(
+                          children: [
+                            Text(
+                              sortedPlayers[0].name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.accentGold.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '1st',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? AppTheme.accentGold
+                                      : const Color(0xFFE65100),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        subtitle: Text(
+                          sortedPlayers[0].currentRoundStock > 0
+                              ? 'Stocked +${sortedPlayers[0].currentRoundStock} this round'
+                              : 'No points this round',
+                          style: TextStyle(
+                            color: sortedPlayers[0].currentRoundStock > 0
+                                ? AppTheme.successGreen
+                                : AppTheme.dangerRed,
+                          ),
+                        ),
+                        trailing: Text(
+                          '${sortedPlayers[0].totalScore}',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // Other Standings
                 Expanded(
                   child: AnimatedBuilder(
                     animation: _cardsController,
                     builder: (context, _) => ListView.builder(
-                      itemCount: sortedPlayers.length,
+                      itemCount: sortedPlayers.length > 1
+                          ? sortedPlayers.length - 1
+                          : 0,
                       itemBuilder: (context, index) {
-                        final player = sortedPlayers[index];
-                        final isLeader = index == 0;
+                        final playerIndex = index + 1;
+                        final player = sortedPlayers[playerIndex];
                         final cardAnim = _getCardAnimation(
-                          index,
+                          playerIndex,
                           sortedPlayers.length,
                         );
 
@@ -1161,37 +1266,26 @@ class _RoundSummaryViewState extends State<_RoundSummaryView>
                             opacity: cardAnim.value.clamp(0.0, 1.0),
                             child: Card(
                               margin: const EdgeInsets.symmetric(vertical: 6),
-                              color: isLeader
-                                  ? AppTheme.accentGold.withOpacity(0.1)
-                                  : null,
                               child: ListTile(
                                 leading: Container(
                                   width: 40,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    color: isLeader
-                                        ? AppTheme.accentGold
-                                        : Theme.of(
-                                            context,
-                                          ).colorScheme.primaryContainer,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primaryContainer,
                                     shape: BoxShape.circle,
                                   ),
                                   child: Center(
-                                    child: isLeader
-                                        ? const Icon(
-                                            Icons.star,
-                                            color: Colors.white,
-                                            size: 20,
-                                          )
-                                        : Text(
-                                            '#${index + 1}',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.onPrimaryContainer,
-                                            ),
-                                          ),
+                                    child: Text(
+                                      '#${playerIndex + 1}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimaryContainer,
+                                      ),
+                                    ),
                                   ),
                                 ),
                                 title: Text(
@@ -1318,7 +1412,6 @@ class _GameOverViewState extends State<_GameOverView> {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    const Spacer(),
                     // Winner announcement
                     Container(
                       padding: const EdgeInsets.all(24),

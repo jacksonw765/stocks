@@ -7,6 +7,7 @@ class DiceDisplay extends StatefulWidget {
   final int die2;
   final bool isDoubles;
   final bool isSeven;
+  final bool isSafeSeven;
   final bool showPlaceholder;
 
   const DiceDisplay({
@@ -15,6 +16,7 @@ class DiceDisplay extends StatefulWidget {
     required this.die2,
     this.isDoubles = false,
     this.isSeven = false,
+    this.isSafeSeven = false,
     this.showPlaceholder = false,
   });
 
@@ -65,6 +67,7 @@ class _DiceDisplayState extends State<DiceDisplay>
   }
 
   Color _getDieColor() {
+    if (widget.isSafeSeven) return AppTheme.accentGold;
     if (widget.isSeven) return AppTheme.dangerRed;
     if (widget.isDoubles) return AppTheme.successGreen;
     return Theme.of(context).colorScheme.surfaceContainerHighest;
@@ -86,14 +89,14 @@ class _DiceDisplayState extends State<DiceDisplay>
           _DieWidget(
             value: widget.die1,
             color: _getDieColor(),
-            isSpecial: widget.isDoubles || widget.isSeven,
+            isSpecial: widget.isDoubles || widget.isSeven || widget.isSafeSeven,
             showPlaceholder: widget.showPlaceholder,
           ),
           const SizedBox(width: 16),
           _DieWidget(
             value: widget.die2,
             color: _getDieColor(),
-            isSpecial: widget.isDoubles || widget.isSeven,
+            isSpecial: widget.isDoubles || widget.isSeven || widget.isSafeSeven,
             showPlaceholder: widget.showPlaceholder,
           ),
         ],

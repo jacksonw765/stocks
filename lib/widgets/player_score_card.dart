@@ -71,25 +71,30 @@ class _PlayerScoreCardState extends State<PlayerScoreCard>
     final pointsToLead = widget.leadScore - widget.player.totalScore;
     final canStock = !hasStocked && widget.stockTotal > 0;
 
+    // Compute border color — always 2px to avoid layout shifts
+    final Color borderColor;
+    if (hasStocked) {
+      borderColor = AppTheme.successGreen;
+    } else if (isLeader) {
+      borderColor = AppTheme.accentGold;
+    } else if (widget.isCurrentRoller) {
+      borderColor = AppTheme.primaryColor.withOpacity(
+        0.5 + (_glowAnimation.value * 0.5),
+      );
+    } else {
+      borderColor = Colors.transparent;
+    }
+
     return AnimatedBuilder(
       animation: _glowAnimation,
       builder: (context, child) {
-        return Container(
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: hasStocked
-                ? Border.all(color: AppTheme.successGreen, width: 2)
-                : (isLeader
-                      ? Border.all(color: AppTheme.accentGold, width: 2)
-                      : (widget.isCurrentRoller
-                            ? Border.all(
-                                color: AppTheme.primaryColor.withOpacity(
-                                  0.5 + (_glowAnimation.value * 0.5),
-                                ),
-                                width: 2,
-                              )
-                            : null)),
+            border: Border.all(color: borderColor, width: 2),
             boxShadow: hasStocked
                 ? [
                     BoxShadow(

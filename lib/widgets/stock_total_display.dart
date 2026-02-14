@@ -175,7 +175,7 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
         children: [
           // ── Top: Roll info + Stats pills + Change ──
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+            padding: const EdgeInsets.fromLTRB(20, 14, 10, 0),
             child: Row(
               children: [
                 _buildInfoChip(
@@ -218,13 +218,13 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
 
           // ── Points ──
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 '${_displayedTotal.toInt()}',
                 style: TextStyle(
-                  fontSize: 52,
+                  fontSize: 60,
                   fontWeight: FontWeight.w800,
                   height: 1,
                   color: Theme.of(context).colorScheme.onSurface,
@@ -234,7 +234,6 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
             ),
           ),
 
-          const SizedBox(height: 16),
 
           // ── Dice Display (if dice values provided) ──
           if (widget.die1 != null && widget.die2 != null) ...[
@@ -242,13 +241,14 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
               die1: widget.die1!,
               die2: widget.die2!,
               outcome: widget.lastOutcome,
+              rollCount: widget.rollCount,
             ),
             const SizedBox(height: 12),
           ],
 
           // ── Roll History Scale (last 5) ──
           SizedBox(
-            height: 48,
+            height: 54,
             child: history.isNotEmpty
                 ? _buildRollHistoryScale(context, history)
                 : _buildEmptyHistoryPlaceholder(context),
@@ -274,37 +274,51 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
     BuildContext context,
     List<RollHistoryEntry> history,
   ) {
+    const int slotCount = 10;
+
     // Only show the last 5 rolls
-    final displayHistory = history.length > 5
-        ? history.sublist(history.length - 5)
+    final displayHistory = history.length > slotCount
+        ? history.sublist(history.length - slotCount)
         : history;
     // Find the maximum value for proportional heights
     final maxVal = displayHistory.map((e) => e.stockTotal).reduce(math.max);
 
-    // Detect round boundaries for visual separators
-    return ShaderMask(
-      shaderCallback: (Rect bounds) {
-        return LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            Colors.transparent,
-            Colors.white,
-            Colors.white,
-            Colors.transparent,
-          ],
-          stops: const [0.0, 0.06, 0.94, 1.0],
-        ).createShader(bounds);
-      },
-      blendMode: BlendMode.dstIn,
-      child: ListView.builder(
-        controller: _scrollController,
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: displayHistory.length,
-        itemBuilder: (context, index) {
+    // Number of empty placeholder slots to pad on the right
+    final dataSlots = displayHistory.length;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: List.generate(slotCount, (slotIndex) {
+          // Placeholder slot — transparent bar to keep layout stable
+          if (slotIndex >= dataSlots) {
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Container(
+                      height: 6.0,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withAlpha(15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          // Real data slot
+          final index = slotIndex;
           final entry = displayHistory[index];
-          final isLast = index == displayHistory.length - 1;
+          final isLast = slotIndex == slotCount - 1;
           final chipColor = _getOutcomeColor(entry.outcome);
 
           // Show a small round separator between rounds
@@ -319,19 +333,23 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
           Widget chipContent = Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              // Value label on active chip
-              if (isLast)
-                Text(
-                  '${entry.stockTotal}',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: chipColor,
-                  ),
+              // Value label above each bar
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOut,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: isLast ? FontWeight.w700 : FontWeight.w500,
+                  color: isLast
+                      ? chipColor
+                      : Theme.of(context).colorScheme.onSurface.withAlpha(120),
                 ),
+                child: Text('${entry.stockTotal}'),
+              ),
               const SizedBox(height: 2),
-              Container(
-                width: isLast ? 28 : 18,
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeOutCubic,
                 height: (30 * relativeHeight).clamp(6.0, 30.0),
                 decoration: BoxDecoration(
                   color: isLast ? chipColor : chipColor.withAlpha(80),
@@ -374,24 +392,27 @@ class _StockTotalDisplayState extends State<StockTotalDisplay>
             );
           }
 
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Round separator
-              if (showRoundSep)
-                Container(
-                  width: 1,
-                  height: 32,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  color: Theme.of(context).colorScheme.outline.withAlpha(50),
+          return Expanded(
+            child: Row(
+              children: [
+                // Round separator
+                if (showRoundSep)
+                  Container(
+                    width: 1,
+                    height: 32,
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    color: Theme.of(context).colorScheme.outline.withAlpha(50),
+                  ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: chipContent,
+                  ),
                 ),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                child: chipContent,
-              ),
-            ],
+              ],
+            ),
           );
-        },
+        }),
       ),
     );
   }
@@ -627,11 +648,13 @@ class _AnimatedDicePair extends StatefulWidget {
   final int die1;
   final int die2;
   final RollOutcome? outcome;
+  final int rollCount;
 
   const _AnimatedDicePair({
     required this.die1,
     required this.die2,
     this.outcome,
+    required this.rollCount,
   });
 
   @override
@@ -841,7 +864,9 @@ class _AnimatedDicePairState extends State<_AnimatedDicePair>
     bool isSeven, {
     RollOutcome? outcome,
   }) {
-    if (isSeven && outcome == RollOutcome.seven70) return AppTheme.accentGold;
+    if (isSeven && (outcome == RollOutcome.seven70 || widget.rollCount <= 3)) {
+      return AppTheme.accentGold;
+    }
     if (isSeven) return AppTheme.dangerRed;
     if (isDoubles) return AppTheme.successGreen;
     return Colors.grey;
