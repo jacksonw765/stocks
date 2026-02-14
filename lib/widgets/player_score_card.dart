@@ -78,25 +78,45 @@ class _PlayerScoreCardState extends State<PlayerScoreCard>
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: widget.isCurrentRoller
-                ? Border.all(
-                    color: AppTheme.primaryColor.withOpacity(
-                      0.5 + (_glowAnimation.value * 0.5),
-                    ),
-                    width: 2,
-                  )
-                : null,
-            boxShadow: widget.isCurrentRoller
+            border: hasStocked
+                ? Border.all(color: AppTheme.successGreen, width: 2)
+                : (isLeader
+                      ? Border.all(color: AppTheme.accentGold, width: 2)
+                      : (widget.isCurrentRoller
+                            ? Border.all(
+                                color: AppTheme.primaryColor.withOpacity(
+                                  0.5 + (_glowAnimation.value * 0.5),
+                                ),
+                                width: 2,
+                              )
+                            : null)),
+            boxShadow: hasStocked
                 ? [
                     BoxShadow(
-                      color: AppTheme.primaryColor.withOpacity(
-                        0.2 * _glowAnimation.value,
-                      ),
-                      blurRadius: 12,
-                      spreadRadius: 2,
+                      color: AppTheme.successGreen.withOpacity(0.3),
+                      blurRadius: 8,
+                      spreadRadius: 1,
                     ),
                   ]
-                : null,
+                : (isLeader
+                      ? [
+                          BoxShadow(
+                            color: AppTheme.accentGold.withOpacity(0.3),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : (widget.isCurrentRoller
+                            ? [
+                                BoxShadow(
+                                  color: AppTheme.primaryColor.withOpacity(
+                                    0.2 * _glowAnimation.value,
+                                  ),
+                                  blurRadius: 12,
+                                  spreadRadius: 2,
+                                ),
+                              ]
+                            : null)),
           ),
           child: child,
         );
@@ -165,6 +185,9 @@ class _PlayerScoreCardState extends State<PlayerScoreCard>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
+          elevation: (hasStocked || isLeader || widget.isCurrentRoller)
+              ? 0
+              : null,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
